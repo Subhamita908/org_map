@@ -1,0 +1,166 @@
+/* Base Styles */
+body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    display: flex;
+    background-color: #f5f5f5;
+    transition: background-color 0.3s ease;
+}
+
+/* Hamburger Icon */
+.hamburger {
+    display: block;
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    width: 40px;
+    height: 40px;
+    font-size: 24px;
+    background-color: white;
+    color: #d32f2f;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1100;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.hamburger:hover {
+    background-color: #ffecec;
+}
+
+/* Sidebar Styles */
+.sidebar {
+    width: 250px;
+    height: 100vh;
+    background-color: #d32f2f;
+    color: white;
+    position: fixed;
+    top: 0;
+    left: 0;
+    padding-top: 30px;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s ease;
+    z-index: 1000;
+}
+
+
+.sidebar.collapsed {
+    transform: translateX(-100%);
+}
+
+/* Sidebar Header */
+.sidebar h2 {
+    text-align: center;
+    color: #ffffff;
+    margin-bottom: 40px;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+/* Navigation Links */
+.sidebar nav {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 0 20px;
+}
+
+.sidebar nav a {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 12px 16px;
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.sidebar nav a:hover,
+.sidebar nav a.active {
+    background-color: #ffffff;
+    color: #d32f2f;
+}
+
+.sidebar nav a i {
+    min-width: 20px;
+}
+
+/*
+.main {
+    margin-left: 250px;
+    padding: 30px;
+    flex-grow: 1;
+    transition: margin-left 0.3s ease;
+}*/
+
+body.sidebar-collapsed .main {
+    margin-left: 0;
+}
+
+/* Toggle Mode Button */
+.toggle-mode {
+    margin-top: auto;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.toggle-mode button {
+    padding: 8px 16px;
+    background-color: white;
+    border: 2px solid white;
+    color: #d32f2f;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    transition: all 0.3s;
+}
+
+.toggle-mode button:hover {
+    background-color: #fff0f0;
+}
+
+/* Dark Mode */
+body.dark-mode {
+    background-color: #121212;
+}
+
+body.dark-mode .sidebar {
+    background-color: #b71c1c;
+}
+
+body.dark-mode .sidebar nav a.active {
+    background-color: #ffffff;
+    color: #b71c1c;
+}
+
+body.dark-mode .toggle-mode button {
+    color: #b71c1c;
+}
+
+/* Responsive Design */
+@media screen and (max-width: 768px) {
+    .sidebar h2,
+    .sidebar nav a span,
+    .toggle-mode button {
+        display: none;
+    }
+
+    .sidebar nav a {
+        justify-content: center;
+        padding: 10px;
+    }
+
+    .main {
+        margin-left: 0;
+        padding: 20px;
+    }
+}

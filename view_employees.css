@@ -1,0 +1,104 @@
+/* General Styling */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f4f6f9;
+}
+
+/* Container Styling */
+.container {
+    background-color: #ffffff;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+/* Page Title */
+h2 {
+    font-weight: 600;
+    color: #343a40;
+    margin-bottom: 20px;
+}
+
+/* Search Bar and Export Button */
+form.d-flex {
+    gap: 10px;
+}
+
+form input[type="text"] {
+    border-radius: 8px;
+    border: 1px solid #ced4da;
+}
+
+form button.btn,
+form a.btn {
+    border-radius: 8px;
+    padding: 6px 14px;
+}
+
+/* Table Styling */
+.table {
+    background-color: #ffffff;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.table th {
+    background-color: red;
+    color: white;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.table td {
+    vertical-align: middle;
+    text-align: center;
+}
+
+.table tbody tr:hover {
+    background-color: #f1f1f1;
+    cursor: pointer;
+}
+
+/* Action Buttons */
+.btn-warning {
+    background-color: #ffc107;
+    border-color: #ffc107;
+    color: #000;
+    font-weight: 500;
+    padding: 5px 10px;
+    border-radius: 5px;
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    color: white;
+    font-weight: 500;
+    padding: 5px 10px;
+    border-radius: 5px;
+}
+
+.btn-danger:hover,
+.btn-warning:hover {
+    opacity: 0.9;
+}
+
+/* Responsive Adjustment */
+@media (max-width: 768px) {
+    .d-flex {
+        flex-direction: column;
+    }
+    
+    form.d-flex {
+        gap: 8px;
+    }
+
+    h2 {
+        font-size: 22px;
+    }
+
+    .table th, .table td {
+        font-size: 14px;
+        padding: 8px;
+    }
+}

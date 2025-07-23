@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Organizational Chart</title>
+    <script src="https://balkangraph.com/js/OrgChart.js"></script>
+    <style>
+        html, body {
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden; 
+            font-family: Arial, sans-serif;
+        }
+
+        #orgChart {
+            width: 100%;
+            height: 100vh;
+        }
+    </style>
+</head>
+<body>
+    <div id="orgChart"></div>
+
+    <script>
+        const chart = new OrgChart(document.getElementById("orgChart"), {
+            template: "ana",
+            enableSearch: true,
+            scaleInitial: OrgChart.match.boundary, // 🔍 Fit to screen
+            nodeBinding: {
+                field_0: "name",
+                field_1: "title",
+                img_0: "img"
+            },
+            nodes: [
+                { id: 1, name: "Abhishek Dhar", title: "Founder & CEO (L-8)", img: "https://cdn-icons-png.flaticon.com/512/3135/3135715.png" },
+                { id: 2, name: "Soumyadeep D.", title: "HR / CExO (L-8)", img: "https://cdn-icons-png.flaticon.com/512/3135/3135715.png" },
+                { id: 3, name: "Debasish Dhar", title: "Founder & CTO (L-8)", img: "https://cdn-icons-png.flaticon.com/512/3135/3135715.png" },
+                { id: 4, pid: 3, name: "Binsi S Prakash", title: "SDE - II (L-4)", img: "https://cdn-icons-png.flaticon.com/512/3135/3135715.png" },
+                { id: 6, pid: 3, name: "Nithya S", title: "Office Executive (L-4)", img: "https://cdn-icons-png.flaticon.com/512/3135/3135715.png" },
+                { id: 7, pid: 1, name: "Alokmoy Majumder", title: "Support Engineer - I (L-3)", img: "https://cdn-icons-png.flaticon.com/512/3135/3135715.png" },
+                { id: 8, pid: 3, name:"Pankaj Sarkar", title: "SDE - II / Team Lead (L-4)", img: "https://cdn-icons-png.flaticon.com/512/3135/3135715.png" },
+                { id: 9, pid: 8, name: "Biswajit Nag", title: "Associate SDE (L-3)", img: "https://cdn-icons-png.flaticon.com/512/3135/3135715.png" },
+                { id: 10, pid: 8, name: "Deptanu Bhowmik", title: "SDE - I (L-3)", img: "https://cdn-icons-png.flaticon.com/512/3135/3135715.png" },
+                { id: 11, pid: 8, name: "Souradip Das", title: "Associate SDE (L-3)", img: "https://cdn-icons-png.flaticon.com/512/3135/3135715.png" },
+                { id: 12, pid: 3, name: "Debarghya Acharjee", title: "SDE - II / Team Lead (L-4)", img: "https://cdn-icons-png.flaticon.com/512/3135/3135715.png" },
+                { id: 13, pid: 12, name: "Joydeep Debnath", title: "Associate SDE (L-3)", img: "https://cdn-icons-png.flaticon.com/512/3135/3135715.png" },
+                { id: 14, pid: 12, name: "Subhamita Deb", title: "SD-Intern (L-2)", img: "https://cdn-icons-png.flaticon.com/512/3135/3135715.png" },
+                { id: 15, pid: 3, name: "Payel Ghosh", title: "Project Manager (L-4)", img: "https://cdn-icons-png.flaticon.com/512/3135/3135715.png" },
+                { id: 16, pid: 15, name: "Maitri Aich", title: "Analyst Intern (L-2)", img: "https://cdn-icons-png.flaticon.com/512/3135/3135715.png" },
+                { id: 17, pid: 15, name: "Neha Roy", title: "Business Analyst (L-3)", img: "https://cdn-icons-png.flaticon.com/512/3135/3135715.png" },
+                { id: 18, pid: 15, name: "Soniya Rudra Paul", title: "Support Engineer - I (L-3)", img: "https://cdn-icons-png.flaticon.com/512/3135/3135715.png" },
+                { id: 19, pid: 8, name: "Sagnik Chowdhury", title: "Support Engineer - I (L-3)", img: "https://cdn-icons-png.flaticon.com/512/3135/3135715.png" }
+            ]
+        });
+    </script>
+</body>
+</html>
