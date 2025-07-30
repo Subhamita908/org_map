@@ -9,23 +9,26 @@ require 'config.php';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // Sanitize & collect form data
-    $name = trim($_POST['name']);
-    $employee_id = trim($_POST['employee_id']);
-    $designation = trim($_POST['designation']);
-    $email = trim($_POST['email']);
-    $phone = trim($_POST['phone']);
-    $hierarchy_level = trim($_POST['hierarchy_level']);
-    $manager_name = trim($_POST['manager_name']);
-    $mentor_name = isset($_POST['mentor_name']) ? trim($_POST['mentor_name']) : null;
-    $location = trim($_POST['location']);
-    $date_of_join = $_POST['date_of_join'];
-    $date_of_birth = $_POST['date_of_birth'];
+    $name             = trim($_POST['name']);
+    $employee_id      = trim($_POST['employee_id']);
+    $designation      = trim($_POST['designation']);
+    $email            = trim($_POST['email']);
+    $phone            = trim($_POST['phone']);
+    $hierarchy_level  = trim($_POST['hierarchy_level']);
+    $pid              = $_POST['pid']; // manager's employee ID
+    $location         = trim($_POST['location']);
+    $date_of_join     = $_POST['date_of_join'];
+    $date_of_birth    = $_POST['date_of_birth'];
 
-    // Validate L-2 must have a mentor
-    if ($hierarchy_level === 'L-2' && empty($mentor_name)) {
-        $_SESSION['error'] = "Mentor is mandatory for L-2 employees.";
-        header("Location: add_employee.php");
-        exit();
+    // Get manager name using pid
+    $manager_name = null;
+    if (!empty($pid)) {
+        $stmt = $conn->prepare("SELECT name FROM employees WHERE id = ?");
+        $stmt->execute([$pid]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($row) {
+            $manager_name = $row['name'];
+        }
     }
 
     // Handle profile picture upload
@@ -58,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 
     try {
-        // Check duplicate employee_id
+        // Check for duplicate employee ID
         $check = $conn->prepare("SELECT COUNT(*) FROM employees WHERE employee_id = ?");
         $check->execute([$employee_id]);
         if ($check->fetchColumn() > 0) {
@@ -69,7 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         // Insert into DB
         $stmt = $conn->prepare("INSERT INTO employees 
-            (name, employee_id, designation, email, phone, hierarchy_level, manager_name, mentor_name, location, date_of_join, date_of_birth, profile_picture)
+            (name, employee_id, designation, email, phone, hierarchy_level, pid, manager_name, location, date_of_join, date_of_birth, profile_picture)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
         $stmt->execute([
@@ -79,8 +82,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $email,
             $phone,
             $hierarchy_level,
+            $pid,
             $manager_name,
-            $mentor_name,
             $location,
             $date_of_join,
             $date_of_birth,

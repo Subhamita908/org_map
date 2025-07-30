@@ -1,42 +1,30 @@
 <?php
 require 'config.php';
 
-if (!isset($_GET['level']) || !isset($_GET['location'])) {
-    echo 'hello';
-    exit;
-}
+$level_hierarchy = [
+    'L2' => 'L3',
+    'L3' => 'L4',
+    'L4' => 'L5',
+    'L5' => 'L6',
+    'L6' => 'L7',
+    'L7' => 'L8',
+    'L8' => null
+];
 
-$level = $_GET['level'];
-$location = $_GET['location'];
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['level'])) {
+    $current_level = $_POST['level'];
+    $manager_level = $level_hierarchy[$current_level] ?? null;
 
-// Define hierarchy order
-$levels = ['L-8', 'L-7', 'L-6', 'L-5', 'L-4', 'L-3', 'L-2'];
-echo 'iuweriweiurweiu';
+    if ($manager_level) {
+        $stmt = $pdo->prepare("SELECT name FROM employees WHERE hierarchy_level = ?");
+        $stmt->execute([$manager_level]);
 
-// Get current index
-$currentIndex = array_search($level, $levels);
-
-// Get higher levels only
-$higherLevels = array_slice($levels, 0, $currentIndex);
-
-if (count($higherLevels) === 0) {
-    echo '<option value="">No managers available</option>';
-    exit;
-}
-
-// Convert to placeholders
-$placeholders = implode(',', array_fill(0, count($higherLevels), '?'));
-$sql = "SELECT name FROM employees WHERE hierarchy_level IN ($placeholders) AND location = ? ORDER BY hierarchy_level DESC";
-$stmt = $conn->prepare($sql);
-$params = array_merge($higherLevels, [$location]);
-$stmt->execute($params);
-
-$managers = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-echo $managers;
-
-echo '<option value="">-- Select Manager --</option>';
-foreach ($managers as $manager) {
-    echo "<option value=\"" . htmlspecialchars($manager['name']) . "\">" . htmlspecialchars($manager['name']) . "</option>";
+        echo '<option value="">-- Select Manager --</option>';
+        while ($row = $stmt->fetch()) {
+            echo '<option value="' . htmlspecialchars($row['name']) . '">' . htmlspecialchars($row['name']) . '</option>';
+        }
+    } else {
+        echo '<option value="">No higher-level manager available</option>';
+    }
 }
 ?>
