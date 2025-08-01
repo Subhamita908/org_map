@@ -2,6 +2,8 @@
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background-color: #f4f6f9;
+    margin: 0;
+    padding: 20px;
 }
 
 /* Container Styling */
@@ -19,39 +21,69 @@ h2 {
     margin-bottom: 20px;
 }
 
-/* Search Bar and Export Button */
-form.d-flex {
+/* Search & Export Wrapper */
+.top-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
     gap: 10px;
 }
 
-form input[type="text"] {
-    border-radius: 8px;
-    border: 1px solid #ced4da;
+/* Search Bar */
+.search-form {
+    display: flex;
+    gap: 10px;
+    align-items: center;
 }
 
-form button.btn,
-form a.btn {
+.search-form input[type="text"] {
+    padding: 8px 12px;
     border-radius: 8px;
-    padding: 6px 14px;
+    border: 1px solid #ced4da;
+    width: 250px;
+}
+
+/* Export Button */
+.export-btn {
+    padding: 8px 14px;
+    border-radius: 8px;
+    background-color: #198754;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.3s ease;
+}
+
+.export-btn:hover {
+    background-color: #146c43;
 }
 
 /* Table Styling */
 .table {
+    width: 100%;
     background-color: #ffffff;
+    border-collapse: collapse;
     border-radius: 10px;
     overflow: hidden;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
 }
 
 .table th {
-    background-color: red;
+    background-color: red !important;
     color: white;
     text-align: center;
     vertical-align: middle;
+    padding: 12px 10px;
 }
 
 .table td {
-    vertical-align: middle;
     text-align: center;
+    vertical-align: middle;
+    padding: 10px 8px;
+    border-bottom: 1px solid #eaeaea;
 }
 
 .table tbody tr:hover {
@@ -65,8 +97,9 @@ form a.btn {
     border-color: #ffc107;
     color: #000;
     font-weight: 500;
-    padding: 5px 10px;
+    padding: 6px 12px;
     border-radius: 5px;
+    text-decoration: none;
 }
 
 .btn-danger {
@@ -74,23 +107,35 @@ form a.btn {
     border-color: #dc3545;
     color: white;
     font-weight: 500;
-    padding: 5px 10px;
+    padding: 6px 12px;
     border-radius: 5px;
+    text-decoration: none;
 }
 
-.btn-danger:hover,
-.btn-warning:hover {
+.btn-warning:hover,
+.btn-danger:hover {
     opacity: 0.9;
 }
 
-/* Responsive Adjustment */
+/* Responsive Design */
 @media (max-width: 768px) {
-    .d-flex {
+    .top-controls {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .search-form {
+        width: 100%;
         flex-direction: column;
     }
-    
-    form.d-flex {
-        gap: 8px;
+
+    .search-form input[type="text"] {
+        width: 100%;
+    }
+
+    .export-btn {
+        width: 100%;
     }
 
     h2 {

@@ -1,8 +1,7 @@
 <?php
 session_start();
-require 'config.php';
+require 'config.php'; // make sure it defines $pdo
 
-// Clear any existing session
 if (isset($_SESSION['hr_logged_in'])) {
     unset($_SESSION['hr_logged_in']);
     unset($_SESSION['hr_username']);
@@ -10,28 +9,19 @@ if (isset($_SESSION['hr_logged_in'])) {
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $username = trim($_POST['username']);
-    $password = md5(trim($_POST['password'])); // md5 hashing
+    $password = md5(trim($_POST['password']));
 
-    // Validate input
     if (empty($username) || empty($password)) {
         echo "<script>alert('Please fill in all fields'); window.location.href='index.html';</script>";
         exit();
     }
 
-    echo $username . "" . $password . "";
-
     try {
-        // Use a single query to check both username or email
-
-        $stmt = $conn->prepare("SELECT * FROM hr_login WHERE email = :username");
+        $stmt = $pdo->prepare("SELECT * FROM hr_login WHERE email = :username");
         $stmt->execute([':username' => $username]);
-        $user = $stmt->fetch(mode: PDO::FETCH_ASSOC);
-
-        // echo "here123";
-
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($user && $user['password'] === $password) {
-
             $_SESSION['hr_logged_in'] = true;
             $_SESSION['hr_username'] = $user['username'];
             header("Location: dashboard.php");
@@ -40,10 +30,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             echo "<script>alert('Invalid username/email or password'); window.location.href='index.html';</script>";
         }
     } catch (PDOException $e) {
-        echo $username;
-        echo ("Login error: " . $e->getMessage());
-        // echo "<script>alert('Database error occurred'); window.location.href='index.html';</script>";
-        // echo "<script>alert('something went wrong!'); window.location.href='index.html';</script>";
+        echo "Login error: " . $e->getMessage();
     }
 }
+
 ?>

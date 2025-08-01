@@ -59,76 +59,56 @@ require 'config.php';
 
     <button type="submit" name="search">Search</button>
 </form>
-
 <?php
-// Define level mapping: selected => higher level
-$hierarchy_map = [
-    "L2" => "L3",
-    "L3" => "L4",
-    "L4" => "L5",
-    "L5" => "L6",
-    "L6" => "L7",
-    "L7" => "L8",
-    "L8" => null
-];
+require 'config.php'; // Ensure $pdo is available
 
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['search'])) {
-    $level = $_POST['level'];
-    $higher_level = $hierarchy_map[$level] ?? null;
+    $selectedLevel = $_POST['level'];
 
-    if (!empty($level)) {
-        // Show selected level results
-        $stmt = $pdo->prepare("SELECT name, designation FROM employees WHERE hierarchy_level = ?");
-        $stmt->execute([$level]);
+    // Define full level hierarchy from highest to lowest
+    $levels = ["L8", "L7", "L6", "L5", "L4", "L3", "L2"];
+    $startIndex = array_search($selectedLevel, $levels);
 
-        echo "<div class='section-heading'>Employees at Level: $level</div>";
+    if ($startIndex !== false && $startIndex > 0) {
+        // Get all levels higher than selected (before its index)
+        $levels_to_show = array_slice($levels, 0, $startIndex);
+
+        // Build placeholders (?, ?, ?, ...)
+        $placeholders = implode(',', array_fill(0, count($levels_to_show), '?'));
+
+        // Prepare SQL with FIELD to enforce custom order
+        $sql = "SELECT name, designation, hierarchy_level 
+                FROM employees 
+                WHERE hierarchy_level IN ($placeholders) 
+                ORDER BY FIELD(hierarchy_level, $placeholders)";
+
+        // Merge params twice for IN and FIELD
+        $params = array_merge($levels_to_show, $levels_to_show);
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
 
         if ($stmt->rowCount() > 0) {
-            echo "<table>
+            echo "<h3>Employees from levels higher than $selectedLevel (Sorted High → Low)</h3>";
+            echo "<table border='1' cellpadding='8'>
                     <tr>
                         <th>Name</th>
                         <th>Designation</th>
+                        <th>Hierarchy Level</th>
                     </tr>";
             while ($row = $stmt->fetch()) {
                 echo "<tr>
                         <td>" . htmlspecialchars($row['name']) . "</td>
                         <td>" . htmlspecialchars($row['designation']) . "</td>
+                        <td>" . htmlspecialchars($row['hierarchy_level']) . "</td>
                       </tr>";
             }
             echo "</table>";
         } else {
-            echo "<p>No employees found for level $level.</p>";
+            echo "<p>No employees found for levels higher than $selectedLevel.</p>";
         }
-
-        // Show higher level results (if any)
-        if ($higher_level) {
-            $stmt2 = $pdo->prepare("SELECT name, designation FROM employees WHERE hierarchy_level = ?");
-            $stmt2->execute([$higher_level]);
-
-            echo "<div class='section-heading'>Employees at Higher Level: $higher_level</div>";
-
-            if ($stmt2->rowCount() > 0) {
-                echo "<table>
-                        <tr>
-                            <th>Name</th>
-                            <th>Designation</th>
-                        </tr>";
-                while ($row = $stmt2->fetch()) {
-                    echo "<tr>
-                            <td>" . htmlspecialchars($row['name']) . "</td>
-                            <td>" . htmlspecialchars($row['designation']) . "</td>
-                          </tr>";
-                }
-                echo "</table>";
-            } else {
-                echo "<p>No employees found for higher level $higher_level.</p>";
-            }
-        } else {
-            echo "<p>No higher level exists for $level.</p>";
-        }
-
     } else {
-        echo "<p>Please select a hierarchy level.</p>";
+        echo "<p>No higher levels exist above $selectedLevel or invalid level selected.</p>";
     }
 }
 ?>

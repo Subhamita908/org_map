@@ -1,30 +1,42 @@
 <?php
 require 'config.php';
 
-$level_hierarchy = [
-    'L2' => 'L3',
-    'L3' => 'L4',
-    'L4' => 'L5',
-    'L5' => 'L6',
-    'L6' => 'L7',
-    'L7' => 'L8',
-    'L8' => null
-];
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['level'])) {
+    $selectedLevel = $_POST['level'];
 
-if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['level'])) {
-    $current_level = $_POST['level'];
-    $manager_level = $level_hierarchy[$current_level] ?? null;
+    // Define hierarchy map
+    $hierarchyMap = [
+        'L-2' => ['L-2', 'L-3', 'L-4', 'L-5', 'L-6', 'L-7', 'L-8'],
+        'L-3' => ['L-4', 'L-5', 'L-6', 'L-7', 'L-8'],
+        'L-4' => ['L-5', 'L-6', 'L-7', 'L-8'],
+        'L-5' => ['L-6', 'L-7', 'L-8'],
+        'L-6' => ['L-7', 'L-8'],
+        'L-7' => ['L-8'],
+        'L-8' => [] // No managers; connected to organization
+    ];
 
-    if ($manager_level) {
-        $stmt = $pdo->prepare("SELECT name FROM employees WHERE hierarchy_level = ?");
-        $stmt->execute([$manager_level]);
+    if ($selectedLevel === 'L-8') {
+        echo "<option value=''>Connected to Organization</option>";
+        exit;
+    }
 
-        echo '<option value="">-- Select Manager --</option>';
-        while ($row = $stmt->fetch()) {
-            echo '<option value="' . htmlspecialchars($row['name']) . '">' . htmlspecialchars($row['name']) . '</option>';
-        }
-    } else {
-        echo '<option value="">No higher-level manager available</option>';
+    if (!isset($hierarchyMap[$selectedLevel])) {
+        echo "<option value=''>-- Invalid Level --</option>";
+        exit;
+    }
+
+    $allowedLevels = $hierarchyMap[$selectedLevel];
+
+    // Convert to comma-separated quoted values for SQL
+    $placeholders = implode(',', array_fill(0, count($allowedLevels), '?'));
+
+    $sql = "SELECT id, name, hierarchy_level FROM employees WHERE hierarchy_level IN ($placeholders) ORDER BY hierarchy_level ASC";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($allowedLevels);
+
+    echo "<option value=''>-- Select Manager --</option>";
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        echo "<option value='{$row['id']}'>{$row['name']} ({$row['hierarchy_level']})</option>";
     }
 }
 ?>

@@ -1,4 +1,4 @@
-<?php   
+<?php    
 session_start();
 if (!isset($_SESSION['hr_logged_in'])) {
     header("Location: index.html");
@@ -7,9 +7,7 @@ if (!isset($_SESSION['hr_logged_in'])) {
 require 'config.php';
 
 // Fetch dashboard data
-$totalEmployees = $conn->query("SELECT COUNT(*) FROM employees")->fetchColumn();
-$birthdaysToday = $conn->query("SELECT COUNT(*) FROM employees WHERE DATE_FORMAT(date_of_birth, '%m-%d') = DATE_FORMAT(CURDATE(), '%m-%d')")->fetchColumn();
-$anniversariesToday = $conn->query("SELECT COUNT(*) FROM employees WHERE DATE_FORMAT(date_of_join, '%m-%d') = DATE_FORMAT(CURDATE(), '%m-%d')")->fetchColumn();
+$totalEmployees = $pdo->query("SELECT COUNT(*) FROM employees")->fetchColumn();
 ?>
 
 <!DOCTYPE html>
@@ -38,27 +36,17 @@ $anniversariesToday = $conn->query("SELECT COUNT(*) FROM employees WHERE DATE_FO
             display: flex;
             justify-content: space-between;
             align-items: center;
-            flex-direction:column;
+            flex-direction: column;
             margin-bottom: 30px;
         }
 
         .dashboard-header h2 {
             color: red;
         }
-/*
-        .notification-bell {
-            position: relative;
-            font-size: 22px;
-            color: #2c3e50;
-        }
-
-        .notification-bell i {
-            cursor: pointer;
-        }*/
 
         .dashboard-widgets {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 25px;
         }
 
@@ -82,6 +70,12 @@ $anniversariesToday = $conn->query("SELECT COUNT(*) FROM employees WHERE DATE_FO
             color: #1abc9c;
         }
 
+        iframe {
+            width: 100%;
+            height: 400px;
+            border: none;
+        }
+
         @media screen and (max-width: 768px) {
             .main-content {
                 margin-left: 0;
@@ -97,24 +91,12 @@ $anniversariesToday = $conn->query("SELECT COUNT(*) FROM employees WHERE DATE_FO
 <div class="main-content">
     <div class="dashboard-header">
         <h2>Dashboard</h2>
-        <!---
-        <div class="notification-bell">
-            <i class="fas fa-bell"></i>
-        </div>--->
     </div>
 
-    <div class="dashboard-widgets">
-        <div class="card">
-            <h3>Total Employees</h3>
-            <p><?= $totalEmployees ?></p>
-        </div>
-        <div class="card">
-            <h3>Today's Birthdays</h3>
-            <p><?= $birthdaysToday ?></p>
-        </div>
-        <div class="card">
-            <h3>Today's Anniversaries</h3>
-            <p><?= $anniversariesToday ?></p>
+
+        <div class="card" style="grid-column: span 2;">
+            <h3>Organization Chart</h3>
+            <iframe src="index.php"></iframe>
         </div>
     </div>
 </div>

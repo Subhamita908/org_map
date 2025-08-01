@@ -7,155 +7,228 @@ if (!isset($_SESSION['hr_logged_in'])) {
 
 require 'config.php';
 
-// Handle search
-$searchTerm = isset($_GET['search']) ? trim($_GET['search']) : '';
-if ($searchTerm !== '') {
-    $stmt = $conn->prepare("SELECT * FROM employees WHERE name LIKE :search1 OR employee_id LIKE :search2 ORDER BY hierarchy_level ASC");
-    $stmt->execute([
-        ':search1' => "%$searchTerm%",
-        ':search2' => "%$searchTerm%"
-    ]);
-} else {
-    $stmt = $conn->prepare("SELECT * FROM employees ORDER BY hierarchy_level ASC");
-    $stmt->execute();
-}
-$employees = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-// Handle Excel Export
+// Export logic
 if (isset($_GET['export']) && $_GET['export'] === 'excel') {
     header("Content-Type: application/vnd.ms-excel");
-    header("Content-Disposition: attachment; filename=export_employees_list_" . date('Y-m-d') . ".xls");
+    header("Content-Disposition: attachment; filename=employees_" . date("Ymd_His") . ".xls");
 
-    echo "Name\tEmployee ID\tDesignation\tEmail\tPhone\tManager\tLocation\n";
-    foreach ($employees as $emp) {
-        echo "{$emp['name']}\t{$emp['employee_id']}\t{$emp['designation']}\t{$emp['email']}\t{$emp['phone']}\t{$emp['manager_name']}\t{$emp['location']}\n";
+    echo "<table border='1'>";
+    echo "<tr>
+            <th>Employee ID</th><th>Name</th><th>Designation</th>
+            <th>Email</th><th>Phone</th><th>Hierarchy</th><th>Manager</th>
+            <th>Location</th><th>Date of Birth</th><th>Date of Joining</th>
+        </tr>";
+
+    $stmt = $pdo->query("SELECT * FROM employees ORDER BY hierarchy_level ASC");
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        echo "<tr>
+            <td>{$row['employee_id']}</td>
+            <td>{$row['name']}</td>
+            <td>{$row['designation']}</td>
+            <td>{$row['email']}</td>
+            <td>{$row['phone']}</td>
+            <td>{$row['hierarchy_level']}</td>
+            <td>{$row['manager_name']}</td>
+            <td>{$row['location']}</td>
+            <td>{$row['date_of_birth']}</td>
+            <td>{$row['date_of_join']}</td>
+        </tr>";
     }
-    exit;
+    echo "</table>";
+    exit();
 }
+
+// Fetch for UI display
+$stmt = $pdo->query("SELECT * FROM employees ORDER BY hierarchy_level ASC");
+$employees = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>View Employees</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <title>Employee Directory | Ilogitron Technologies</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
         body {
-            font-family: 'Segoe UI', sans-serif;
-            background-color: #f8f9fa;
+            margin: 0;
+            background-color: #f0f2f5;
         }
-        .table-container {
-            margin: 40px auto;
-            width: 95%;
+
+        .container {
+            padding: 40px 20px;
+            max-width: 100%;
+            width: 1200px;
+            margin: auto;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
-        .table th {
-            background-color: red;
-            color: #fff;
+
+        h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
         }
-        .profile-img {
-            width: 50px;
-            height: 50px;
-            object-fit: cover;
-            border-radius: 50%;
-        }
-        .btn-export {
-            float: right;
-            margin-bottom: 10px;
-        }
-        .search-container {
-            margin-bottom: 20px;
+
+        .top-bar {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            margin-bottom: 20px;
+            gap: 10px;
         }
-        .search-container form {
-            display: flex;
-            align-items: center;
-        }
-        .search-container input[type="text"] {
-            padding: 8px 12px;
+
+        .top-bar input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            font-size: 14px;
             border: 1px solid #ccc;
-            border-radius: 5px 0 0 5px;
-            outline: none;
+            border-radius: 6px;
+            flex: 1;
         }
-        .search-container button {
-            padding: 8px 16px;
-            border: none;
-            background-color: crimson;
+
+        .top-bar a.export-btn {
+            background-color: green;
             color: white;
-            border-radius: 0 5px 5px 0;
+            padding: 10px 16px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .top-bar a.export-btn:hover {
+            background-color: darkgreen;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+
+        th {
+            background-color: red;
+            color: white;
+        }
+
+        img.profile-pic {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        a {
+            text-decoration: none;
+            padding: 6px 12px;
+            margin: 0 4px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+
+        a.edit {
+            background-color: blue;
+            color: white;
+        }
+
+        a.delete {
+            background-color: red;
+            color: white;
+        }
+
+        a.edit:hover, a.delete:hover {
+            opacity: 0.7;
+        }
+
+        .scrollable-table {
+            overflow-x: auto;
         }
     </style>
+
+    <script>
+        function searchTable() {
+            let input = document.getElementById("searchInput").value.toLowerCase();
+            let rows = document.querySelectorAll("tbody tr");
+
+            rows.forEach(row => {
+                let match = Array.from(row.cells).some(td => td.textContent.toLowerCase().includes(input));
+                row.style.display = match ? "" : "none";
+            });
+        }
+    </script>
 </head>
 <body>
 
 <?php include 'sidebar.php'; ?>
 
-<div class="container table-container">
+<div class="container">
+    <h2>Employee Directory</h2>
 
-    <div class="search-container">
-        <h2>All Employees</h2>
-        <form method="GET" action="view_employees.php">
-            <input type="text" name="search" placeholder="Search by Name or ID" value="<?= htmlspecialchars($searchTerm) ?>" required>
-            <button type="submit"><i class="fas fa-search"></i> Search</button>
-        </form>
+    <div class="top-bar">
+        <input type="text" id="searchInput" onkeyup="searchTable()" placeholder="Search by name, email, ID, phone, etc.">
+        <a href="view_employees.php?export=excel" class="export-btn">Export to Excel</a>
     </div>
 
-    <a href="view_employees.php?export=excel<?= $searchTerm !== '' ? '&search=' . urlencode($searchTerm) : '' ?>" class="btn btn-success btn-export">
-        <i class="fas fa-file-excel"></i> Export to Excel
-    </a>
-
-    <table class="table table-bordered table-hover table-striped align-middle">
-        <thead class="table-dark text-center">
-            <tr>
-                <th>Image</th>
-                <th>Name</th>
-                <th>Employee ID</th>
-                <th>Designation</th>
-                <th>Email</th>
-                <th>Phone</th>
-                <th>Manager</th>
-                <th>Location</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody class="text-center">
-            <?php if (!empty($employees)): ?>
-                <?php foreach ($employees as $emp): ?>
+    <div class="scrollable-table">
+        <table>
+            <thead>
+                <tr>
+                    <th>Profile</th>
+                    <th>Employee ID</th>
+                    <th>Name</th>
+                    <th>Designation</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Hierarchy</th>
+                    <th>Manager</th>
+                    <th>Location</th>
+                    <th>DOB</th>
+                    <th>DOJ</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($employees as $row): ?>
                     <tr>
                         <td>
-                            <?php if (!empty($emp['profile_picture']) && file_exists('' . $emp['profile_picture'])): ?>
-                                <img src="uploads/<?php echo htmlspecialchars($emp['profile_picture']); ?>" class="profile-img" alt="Profile">
+                            <?php if (!empty($row['profile_picture'])): ?>
+                                <img src="<?= htmlspecialchars($row['profile_picture']) ?>" alt="Profile" class="profile-pic">
                             <?php else: ?>
-                                <img src=" " class="profile-img" alt="Default">
+                                <img src="default.png" alt="Default" class="profile-pic">
                             <?php endif; ?>
                         </td>
-                        <td><?= htmlspecialchars($emp['name']) ?></td>
-                        <td><?= htmlspecialchars($emp['employee_id']) ?></td>
-                        <td><?= htmlspecialchars($emp['designation']) ?></td>
-                        <td><?= htmlspecialchars($emp['email']) ?></td>
-                        <td><?= htmlspecialchars($emp['phone']) ?></td>
-                        <td><?= htmlspecialchars($emp['manager_name']) ?></td>
-                        <td><?= htmlspecialchars($emp['location']) ?></td>
+                        <td><?= htmlspecialchars($row['employee_id']) ?></td>
+                        <td><?= htmlspecialchars($row['name']) ?></td>
+                        <td><?= htmlspecialchars($row['designation']) ?></td>
+                        <td><?= htmlspecialchars($row['email']) ?></td>
+                        <td><?= htmlspecialchars($row['phone']) ?></td>
+                        <td><?= htmlspecialchars($row['hierarchy_level']) ?></td>
+                        <td><?= htmlspecialchars($row['manager_name']) ?></td>
+                        <td><?= htmlspecialchars($row['location']) ?></td>
+                        <td><?= htmlspecialchars($row['date_of_birth']) ?></td>
+                        <td><?= htmlspecialchars($row['date_of_join']) ?></td>
                         <td>
-                            <a href="edit_employee.php?id=<?= $emp['id'] ?>" class="btn btn-warning btn-sm">
-                                <i class="fas fa-edit"></i> Edit
-                            </a>
-                            <a href="delete_employee.php?id=<?= $emp['id'] ?>" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this employee?');">
-                                <i class="fas fa-trash"></i> Delete
-                            </a>
+                            <a href="edit_employee.php?id=<?= $row['id'] ?>" class="edit">Edit</a>
+                            <a href="delete_employee.php?id=<?= $row['id'] ?>" class="delete" onclick="return confirm('Are you sure you want to delete this employee?');">Delete</a>
                         </td>
                     </tr>
                 <?php endforeach; ?>
-            <?php else: ?>
-                <tr>
-                    <td colspan="9" class="text-center">No employees found.</td>
-                </tr>
-            <?php endif; ?>
-        </tbody>
-    </table>
+            </tbody>
+        </table>
+    </div>
 </div>
 
 </body>

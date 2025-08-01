@@ -1,4 +1,4 @@
-<?php 
+<?php  
 session_start();
 if (!isset($_SESSION['hr_logged_in'])) {
     header("Location: index.html");
@@ -6,7 +6,7 @@ if (!isset($_SESSION['hr_logged_in'])) {
 }
 require 'config.php';
 
-$stmt = $conn->prepare("SELECT * FROM employees");
+$stmt = $pdo->prepare("SELECT * FROM employees");
 $stmt->execute();
 $employees = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
@@ -42,7 +42,6 @@ $employees = $stmt->fetchAll(PDO::FETCH_ASSOC);
             border-radius: 50%;
             margin-right: 5px;
         }
-        /* Modal Styles */
         .modal {
             display: none;
             position: fixed;
@@ -95,8 +94,6 @@ $employees = $stmt->fetchAll(PDO::FETCH_ASSOC);
         google.charts.setOnLoadCallback(drawChart);
 
         let chart, data;
-
-        // Store employee details for modal display
         const employeeDetails = <?php echo json_encode($employees); ?>;
 
         function drawChart() {
@@ -137,15 +134,12 @@ $employees = $stmt->fetchAll(PDO::FETCH_ASSOC);
             chart = new google.visualization.OrgChart(document.getElementById('chart_div'));
             chart.draw(data, {allowHtml:true});
 
-            // On node click, show modal
             google.visualization.events.addListener(chart, 'select', function () {
                 const selection = chart.getSelection();
                 if (selection.length > 0) {
                     const empName = data.getValue(selection[0].row, 0);
                     const emp = employeeDetails.find(e => e.name === empName);
-                    if (emp) {
-                        showModal(emp);
-                    }
+                    if (emp) showModal(emp);
                 }
             });
         }
@@ -153,7 +147,6 @@ $employees = $stmt->fetchAll(PDO::FETCH_ASSOC);
         function showModal(emp) {
             const modal = document.getElementById("employeeModal");
             const modalContent = document.getElementById("modalDetails");
-
             modalContent.innerHTML = `
                 <div style="text-align:center;">
                     <img src="uploads/${emp.profile_picture || 'default.png'}" alt="${emp.name}" />
@@ -170,24 +163,18 @@ $employees = $stmt->fetchAll(PDO::FETCH_ASSOC);
             modal.style.display = "block";
         }
 
-        // Modal close button
-        document.querySelector(".close").onclick = function() {
+        document.querySelector(".close").onclick = () => {
             document.getElementById("employeeModal").style.display = "none";
         }
 
-        // Close modal when clicking outside
         window.onclick = function(event) {
             const modal = document.getElementById("employeeModal");
-            if (event.target === modal) {
-                modal.style.display = "none";
-            }
+            if (event.target === modal) modal.style.display = "none";
         }
 
-        // Search Function
         document.getElementById("searchBox").addEventListener("keyup", function() {
             const searchTerm = this.value.toLowerCase();
             const nodes = document.querySelectorAll('.google-visualization-orgchart-node');
-
             nodes.forEach(function(node) {
                 let text = node.innerText.toLowerCase();
                 if (text.includes(searchTerm)) {
