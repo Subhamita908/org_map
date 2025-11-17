@@ -1,131 +1,116 @@
 <?php
 session_start();
-require 'config.php';
+require 'config.php'; // This should define $pdo
+require 'email_helper.php'; // Contains sendEmail() function
 
-if (!isset($_SESSION['hr_logged_in']) || !isset($_SESSION['hr_email'])) {
-    header("Location: index.html");
-    exit();
-}
-
-$success = $error = '';
+$message = "";
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $current_password = $_POST['current_password'];
-    $new_password = $_POST['new_password'];
-    $confirm_password = $_POST['confirm_password'];
-    $hr_email = $_SESSION['hr_email'];
+    $email = trim($_POST['email']);
 
-    if ($new_password !== $confirm_password) {
-        $error = "New passwords do not match.";
-    } else {
-        // Fetch current hashed password
-        $stmt = $conn->prepare("SELECT password FROM hr WHERE email = ?");
-        $stmt->execute([$hr_email]);
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    // Check if user exists
+    $stmt = $pdo->prepare("SELECT * FROM hr_login WHERE email = ?");
+    $stmt->execute([$email]);
+    $user = $stmt->fetch();
 
-        if ($row && password_verify($current_password, $row['password'])) {
-            $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
-            $update = $conn->prepare("UPDATE hr SET password = ? WHERE email = ?");
-            if ($update->execute([$hashed_password, $hr_email])) {
-                $success = "Password changed successfully.";
+    if ($user) {
+        // Generate new random password
+        $newPassword = bin2hex(random_bytes(4)); // 8-character random string
+        $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+
+        // Update the password in DB
+        $update = $pdo->prepare("UPDATE hr_login SET password = ? WHERE email = ?");
+        if ($update->execute([$hashedPassword, $email])) {
+            $subject = " Your Password Has Been Reset - Ilogitron HR";
+            $body = "
+                <p>Hi <strong>{$user['username']}</strong>,</p>
+                <p>Your password has been reset successfully. Here is your new login password:</p>
+                <p><strong style='font-size:18px;'>{$newPassword}</strong></p>
+                <p>Please login and change your password immediately.</p>
+                <p>Regards,<br>Ilogitron HR Team</p>
+            ";
+
+            if (sendEmail($email, $subject, $body)) {
+                $message = "<p class='success'>Password has been reset. Please check your email.</p>";
             } else {
-                $error = "Something went wrong while updating the password.";
+                $message = "<p class='error'>Failed to send email. Try again.</p>";
             }
         } else {
-            $error = "Current password is incorrect.";
+            $message = "<p class='error'> Failed to update password in the database.</p>";
         }
+    } else {
+        $message = "<p class='error'> No user found with this email.</p>";
     }
 }
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Change Password | HR Panel</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forgot Password</title>
     <style>
         body {
             font-family: 'Segoe UI', sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 2rem;
+            background-color: #f2f2f2;
+            padding: 40px;
         }
-        form {
-            background: #fff;
-            padding: 2rem;
-            max-width: 420px;
+        .container {
+            max-width: 400px;
+            background-color: #fff;
             margin: auto;
+            padding: 30px;
             border-radius: 10px;
-            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+            box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
         }
         h2 {
             text-align: center;
-            margin-bottom: 1.5rem;
-            color: #333;
+            color: red;
         }
-        label {
-            display: block;
-            margin: 0.5rem 0 0.2rem;
-            color: #333;
-        }
-        input[type="password"] {
+        input[type="email"] {
             width: 100%;
             padding: 10px;
+            margin-top: 10px;
+            border-radius: 5px;
             border: 1px solid #ccc;
-            border-radius: 6px;
-            margin-bottom: 1rem;
-            box-sizing: border-box;
         }
         input[type="submit"] {
-            width: 100%;
             background-color: red;
             color: white;
             border: none;
-            padding: 0.8rem;
-            border-radius: 6px;
+            margin-top: 20px;
+            padding: 12px;
+            width: 100%;
+            border-radius: 5px;
+            font-weight: bold;
             cursor: pointer;
-            font-size: 1rem;
         }
-        input[type="submit"]:hover {
-            background-color: red;
-        }
-        .message {
-            text-align: center;
+        .success {
             color: green;
-            margin-bottom: 1rem;
+            background: #e1ffe1;
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 15px;
         }
         .error {
-            text-align: center;
             color: red;
-            margin-bottom: 1rem;
+            background: #ffe5e5;
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 15px;
         }
     </style>
 </head>
 <body>
+<div class="container">
+    <h2>Forgot Password</h2>
 
-    <form method="POST" action="">
-        <h2>Change Password</h2>
+    <?= $message ?>
 
-        <?php if ($success): ?>
-            <p class="message"><?= htmlspecialchars($success) ?></p>
-        <?php endif; ?>
-
-        <?php if ($error): ?>
-            <p class="error"><?= htmlspecialchars($error) ?></p>
-        <?php endif; ?>
-
-        <label for="current_password">Current Password</label>
-        <input type="password" id="current_password" name="current_password" required>
-
-        <label for="new_password">New Password</label>
-        <input type="password" id="new_password" name="new_password" required>
-
-        <label for="confirm_password">Confirm New Password</label>
-        <input type="password" id="confirm_password" name="confirm_password" required>
-
-        <input type="submit" value="Change Password">
+    <form method="POST">
+        <label for="email">Enter Registered Email:</label>
+        <input type="email" name="email" id="email" required>
+        <input type="submit" value="Reset Password">
     </form>
-
+</div>
 </body>
 </html>

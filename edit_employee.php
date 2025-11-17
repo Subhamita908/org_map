@@ -1,149 +1,192 @@
 <?php
-require_once "config.php";
+session_start();
+require 'config.php';
 
-// Fetch employee details
-if (isset($_GET['id'])) {
-    $id = $_GET['id'];
-    $stmt = $pdo->prepare("SELECT * FROM employees WHERE id = ?");
-    $stmt->execute([$id]);
-    $employee = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    if (!$employee) {
-        echo "Employee not found.";
-        exit;
-    }
-} else {
-    echo "Invalid request.";
-    exit;
+// ✅ Check if `id` is passed
+if (!isset($_GET['id'])) {
+    header("Location: view_employees.php");
+    exit();
 }
 
-// Update employee on form submit
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $name = $_POST['name'];
-    $employee_id = $_POST['employee_id'];
-    $designation = $_POST['designation'];
-    $email = $_POST['email'];
-    $phone = $_POST['phone'];
-    $hierarchy_level = $_POST['hierarchy_level'];
-    $pid = $_POST['pid'] ?? NULL;
-    $location = $_POST['location'];
-    $dob = $_POST['date_of_birth'];
-    $doj = $_POST['date_of_join'];
+$id = (int) $_GET['id'];
 
-    // Handle profile picture
+// ✅ Fetch existing employee
+$stmt = $pdo->prepare("SELECT * FROM employees WHERE id = ?");
+$stmt->execute([$id]);
+$employee = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if (!$employee) {
+    echo "Employee not found.";
+    exit();
+}
+
+// ✅ Handle form submission
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $employee_id     = trim($_POST['employee_id']);
+    $name            = trim($_POST['name']);
+    $designation     = trim($_POST['designation']);
+    $email           = trim($_POST['email']);
+    $phone           = trim($_POST['phone']);
+    $hierarchy_level = trim($_POST['hierarchy_level']);
+    $manager_id      = !empty($_POST['pid']) ? (int)$_POST['pid'] : null; // 🔹 maps to `pid`
+    $location        = trim($_POST['location']);
+    $date_of_birth   = !empty($_POST['date_of_birth']) ? $_POST['date_of_birth'] : null;
+    $date_of_join    = !empty($_POST['date_of_join']) ? $_POST['date_of_join'] : null;
+    $manager_name    = trim($_POST['manager_name']);
+    $status          = $_POST['status']; // 🔹 new field
+
+    // ✅ Handle profile picture upload
     $profile_picture = $employee['profile_picture'];
     if (!empty($_FILES['profile_picture']['name'])) {
         $target_dir = "uploads/";
-        $target_file = $target_dir . basename($_FILES["profile_picture"]["name"]);
-        move_uploaded_file($_FILES["profile_picture"]["tmp_name"], $target_file);
-        $profile_picture = $target_file;
+        if (!is_dir($target_dir)) {
+            mkdir($target_dir, 0777, true);
+        }
+        $target_file = $target_dir . time() . "_" . basename($_FILES["profile_picture"]["name"]);
+        if (move_uploaded_file($_FILES["profile_picture"]["tmp_name"], $target_file)) {
+            $profile_picture = $target_file;
+        }
     }
 
-    // Get manager name from pid
-    $manager_name = NULL;
-    if (!empty($pid)) {
-        $stmt = $pdo->prepare("SELECT name FROM employees WHERE id = ?");
-        $stmt->execute([$pid]);
-        $manager = $stmt->fetch(PDO::FETCH_ASSOC);
-        $manager_name = $manager['name'] ?? NULL;
-    }
+    // ✅ Update query with status
+    $stmt = $pdo->prepare("UPDATE employees 
+        SET employee_id=?, name=?, designation=?, email=?, phone=?, hierarchy_level=?, pid=?, location=?, date_of_birth=?, date_of_join=?, profile_picture=?, manager_name=?, status=? 
+        WHERE id=?");
 
-    $update_stmt = $pdo->prepare("UPDATE employees SET name=?, employee_id=?, designation=?, email=?, phone=?, hierarchy_level=?, pid=?, manager_name=?, location=?, date_of_birth=?, date_of_join=?, profile_picture=? WHERE id=?");
-    $update_stmt->execute([$name, $employee_id, $designation, $email, $phone, $hierarchy_level, $pid, $manager_name, $location, $dob, $doj, $profile_picture, $id]);
+    $stmt->execute([
+        $employee_id, $name, $designation, $email, $phone, $hierarchy_level,
+        $manager_id, $location, $date_of_birth, $date_of_join, $profile_picture,
+        $manager_name, $status, $id
+    ]);
 
-    echo "<script>alert('Employee updated successfully!'); window.location.href='view_employees.php';</script>";
-    exit;
+    header("Location: view_employees.php?success=1");
+    exit();
 }
+
+// ✅ Fetch managers for dropdown
+$managers = $pdo->query("SELECT id, name, designation FROM employees ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>Edit Employee</title>
     <style>
-        body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 20px; }
-        .container { background: white; padding: 20px; max-width: 700px; margin: auto; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        input, select { width: 100%; padding: 10px; margin: 8px 0; }
-        label { font-weight: bold; }
-        button { padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; }
-        button:hover { background: #218838; }
-        img { max-width: 100px; margin-top: 10px; }
-    </style>
-    <script>
-        function fetchManagers() {
-            const level = document.getElementById("hierarchy_level").value;
-            const location = document.getElementById("location").value;
-
-            const xhr = new XMLHttpRequest();
-            xhr.open("POST", "get_managers.php", true);
-            xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-            xhr.onload = function () {
-                document.getElementById("pid").innerHTML = this.responseText;
-            };
-            xhr.send("hierarchy_level=" + encodeURIComponent(level) + "&location=" + encodeURIComponent(location));
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+            padding: 20px;
         }
-
-        window.onload = function () {
-            fetchManagers(); // Preload manager list
-        };
-    </script>
+        .container {
+            max-width: 700px;
+            margin: auto;
+            background: #fff;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        label {
+            font-weight: bold;
+            display: block;
+            margin: 10px 0 5px;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+        button {
+            background: red;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: darkred;
+        }
+        .profile-preview {
+            margin-bottom: 15px;
+        }
+        .profile-preview img {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #ddd;
+        }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <h2>Edit Employee</h2>
-        <form method="POST" enctype="multipart/form-data">
-            <label>Name:</label>
-            <input type="text" name="name" value="<?= htmlspecialchars($employee['name']) ?>" required>
+    <?php include 'sidebar.php';?>
+<div class="container">
+    <h2>Edit Employee</h2>
+    <form method="POST" enctype="multipart/form-data">
+        <label>Employee ID</label>
+        <input type="text" name="employee_id" value="<?= htmlspecialchars($employee['employee_id']) ?>" required>
 
-            <label>Employee ID:</label>
-            <input type="text" name="employee_id" value="<?= htmlspecialchars($employee['employee_id']) ?>" required>
+        <label>Name</label>
+        <input type="text" name="name" value="<?= htmlspecialchars($employee['name']) ?>" required>
 
-            <label>Designation:</label>
-            <input type="text" name="designation" value="<?= htmlspecialchars($employee['designation']) ?>" required>
+        <label>Designation</label>
+        <input type="text" name="designation" value="<?= htmlspecialchars($employee['designation']) ?>" required>
 
-            <label>Email:</label>
-            <input type="email" name="email" value="<?= htmlspecialchars($employee['email']) ?>" required>
+        <label>Email</label>
+        <input type="email" name="email" value="<?= htmlspecialchars($employee['email']) ?>" required>
 
-            <label>Phone:</label>
-            <input type="text" name="phone" value="<?= htmlspecialchars($employee['phone']) ?>" required>
+        <label>Phone</label>
+        <input type="text" name="phone" value="<?= htmlspecialchars($employee['phone']) ?>">
 
-            <label>Hierarchy Level:</label>
-            <select name="hierarchy_level" id="hierarchy_level" onchange="fetchManagers()" required>
-                <?php
-                for ($i = 2; $i <= 8; $i++) {
-                    $level = "L-" . $i;
-                    echo "<option value='$level'" . ($employee['hierarchy_level'] == $level ? " selected" : "") . ">$level</option>";
-                }
-                ?>
-            </select>
+        <label>Hierarchy Level</label>
+        <input type="text" name="hierarchy_level" value="<?= htmlspecialchars($employee['hierarchy_level']) ?>">
 
-            <label>Location:</label>
-            <select name="location" id="location" onchange="fetchManagers()" required>
-                <?php
-                $locations = ['Kolkata', 'Bangalore', 'Hyderabad'];
-                foreach ($locations as $loc) {
-                    echo "<option value='$loc'" . ($employee['location'] == $loc ? " selected" : "") . ">$loc</option>";
-                }
-                ?>
-            </select>
+        <label>Manager Name</label>
+        <select name="pid">
+            <option value="">-- None --</option>
+            <?php foreach ($managers as $manager): ?>
+                <option value="<?= $manager['id'] ?>" <?= ($employee['pid'] == $manager['id']) ? 'selected' : '' ?>>
+                    <?= htmlspecialchars($manager['name'] . " (" . $manager['designation'] . ")") ?>
+                </option>
+            <?php endforeach; ?>
+        </select>
 
-            <label>Manager:</label>
-            <select name="pid" id="pid" required></select>
+        <label>Location</label>
+        <select name="location">
+            <option value="Agartala" <?= ($employee['location'] == 'Agartala') ? 'selected' : '' ?>>Agartala</option>
+            <option value="Bangalore" <?= ($employee['location'] == 'Bangalore') ? 'selected' : '' ?>>Bangalore</option>
+        </select>
 
-            <label>Date of Birth:</label>
-            <input type="date" name="date_of_birth" value="<?= $employee['date_of_birth'] ?>" required>
+        <label>Status</label>
+        <select name="status" required>
+            <option value="Active" <?= ($employee['status'] == 'Active') ? 'selected' : '' ?>>Active</option>
+            <option value="Inactive" <?= ($employee['status'] == 'Inactive') ? 'selected' : '' ?>>Inactive</option>
+        </select>
 
-            <label>Date of Joining:</label>
-            <input type="date" name="date_of_join" value="<?= $employee['date_of_join'] ?>" required>
+        <label>Date of Birth</label>
+        <input type="date" name="date_of_birth" value="<?= htmlspecialchars($employee['date_of_birth']) ?>">
 
-            <label>Profile Picture:</label>
-            <input type="file" name="profile_picture" accept="image/*">
-            <?php if ($employee['profile_picture']): ?>
-                <img src="<?= htmlspecialchars($employee['profile_picture']) ?>" alt="Current Picture">
+        <label>Date of Joining</label>
+        <input type="date" name="date_of_join" value="<?= htmlspecialchars($employee['date_of_join']) ?>">
+
+        <label>Profile Picture</label>
+        <div class="profile-preview">
+            <?php if (!empty($employee['profile_picture'])): ?>
+                <img src="<?= htmlspecialchars($employee['profile_picture']) ?>" alt="Profile Picture">
             <?php endif; ?>
+        </div>
+        <input type="file" name="profile_picture">
 
-            <button type="submit">Update</button>
-        </form>
-    </div>
+        <button type="submit">Update Employee</button>
+    </form>
+</div>
 </body>
 </html>

@@ -5,9 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>iLogitron | HR Login</title>
     <style>
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
 
         body {
             margin: 0;
@@ -29,6 +27,23 @@
             max-width: 420px;
         }
 
+        /* Logo styling */
+        .login-container img {
+            display: block;
+            width: 270px;   /* between 80–100px */
+            height: auto;
+            margin: 0 auto 1rem auto; /* center + spacing below */
+        }
+
+        .login-container small {
+            display: block;
+            text-align: center;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: #444;
+        }
+
         .login-container h2 {
             text-align: center;
             font-size: 1.8rem;
@@ -37,9 +52,7 @@
             line-height: 1.4;
         }
 
-        .form-group {
-            margin-bottom: 1.2rem;
-        }
+        .form-group { margin-bottom: 1.2rem; }
 
         label {
             display: block;
@@ -78,7 +91,7 @@
         }
 
         .login-container button:hover {
-            background-color: red;
+            background-color: darkred;
         }
 
         .links {
@@ -93,29 +106,24 @@
             margin: 0 0.4rem;
         }
 
-        .links a:hover {
-            text-decoration: underline;
-        }
+        .links a:hover { text-decoration: underline; }
 
         .error-message {
             color: #d10000;
-            font-size: 0.9rem;
-            margin-top: 0.4rem;
-            display: none;
-        }
-
-        @media (max-width: 480px) {
-            .login-container {
-                margin: 1rem;
-                padding: 1.8rem;
-            }
+            font-size: 0.95rem;
+            margin-bottom: 1rem;
+            text-align: center;
         }
     </style>
 </head>
 <body>
 
 <div class="login-container">
-    <h2>iLogitron Technologies<br><small>HR Portal Login</small></h2>
+    <img src="uploads/hr_profiles/OIP.webp" alt="logo-company">
+    <h2 class="text-center">HR Admin Login</h2> 
+
+    <!-- Static error placeholder (replace dynamically with JS if needed) -->
+    <div class="error-message" style="display:none;">⚠️ Invalid username or password</div>
 
     <form id="loginForm" action="login.php" method="POST">
         <div class="form-group">
@@ -125,10 +133,8 @@
                 id="username" 
                 name="username" 
                 placeholder="Enter your email or username" 
-                required 
-                aria-describedby="username-error"
+                required
             >
-            <div id="username-error" class="error-message"></div>
         </div>
 
         <div class="form-group">
@@ -138,55 +144,17 @@
                 id="password" 
                 name="password" 
                 placeholder="Enter your password" 
-                required 
-                aria-describedby="password-error"
+                required
             >
-            <div id="password-error" class="error-message"></div>
         </div>
 
         <button type="submit">Login</button>
 
         <div class="links">
-            <a href="signup.php">Sign Up</a>|
-            <a href="change_password.php">Change Password</a> | 
             <a href="forgot_password.php">Forgot Password?</a>
         </div>
     </form>
 </div>
-
-<script>
-    document.getElementById('loginForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-
-        // Reset errors
-        document.querySelectorAll('.error-message').forEach(el => {
-            el.style.display = 'none';
-            el.textContent = '';
-        });
-
-        const username = document.getElementById('username').value.trim();
-        const password = document.getElementById('password').value;
-        let valid = true;
-
-        if (!username) {
-            const userErr = document.getElementById('username-error');
-            userErr.textContent = 'Please enter your username or email.';
-            userErr.style.display = 'block';
-            valid = false;
-        }
-
-        if (!password) {
-            const passErr = document.getElementById('password-error');
-            passErr.textContent = 'Please enter your password.';
-            passErr.style.display = 'block';
-            valid = false;
-        }
-
-        if (valid) {
-            this.submit();
-        }
-    });
-</script>
 
 </body>
 </html>
